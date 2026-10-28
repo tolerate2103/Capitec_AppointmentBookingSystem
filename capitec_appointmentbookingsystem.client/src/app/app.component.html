@@ -1,0 +1,119 @@
+<div class="app-shell">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Capitec appointments home">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span class="brand-name">capitec<span>appointments</span></span>
+    </a>
+    <div class="topbar-right"><span class="secure-dot"></span><span>Secure booking</span><span class="topbar-divider"></span><span class="help-label">Need help?</span><span class="help-label">Booking support</span></div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="eyebrow-line"></span> BANKING, ON YOUR TIME</div>
+        <h1>Your time matters.<br><span>Book a visit.</span></h1>
+        <p>Choose a branch, find a time that works for you, and let us take care of the rest.</p>
+        <div class="hero-benefits">
+          <div><span class="benefit-icon">✓</span><span>No waiting in line</span></div>
+          <div><span class="benefit-icon">✓</span><span>Pick a time that suits you</span></div>
+        </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div>
+        <div class="art-card">
+          <div class="art-card-top"><span class="art-dot"></span><span>YOUR NEXT VISIT</span><span class="art-check">✓</span></div>
+          <div class="art-calendar"><div class="calendar-month">YOUR SCHEDULE</div><div class="calendar-date">A better way<br>to bank.</div><div class="calendar-rule"></div><div class="calendar-bottom"><span class="calendar-icon">▦</span><span>Simple. Convenient. Yours.</span></div></div>
+        </div>
+        <div class="floating-check">✓</div>
+      </div>
+    </section>
+
+    <section class="booking-layout" aria-label="Book an appointment">
+      <div class="booking-main">
+        <div class="section-heading">
+          <div><div class="section-kicker">LET'S GET YOU SORTED</div><h2>Book your appointment</h2><p>It only takes a few minutes.</p></div>
+          <div class="step-count"><strong>{{ '0' + currentStep }}</strong><span>/ 03</span></div>
+        </div>
+
+        <div class="progress-track" aria-label="Booking progress">
+          <span [class.complete]="currentStep >= 1"></span><span [class.complete]="currentStep >= 2"></span><span [class.complete]="currentStep >= 3"></span>
+        </div>
+
+        <div *ngIf="pageError" class="alert error-alert" role="alert"><span class="alert-symbol">!</span><span>{{ pageError }}</span></div>
+
+        <section *ngIf="confirmation as booked" class="confirmation-panel" aria-live="polite">
+          <div class="success-icon"><span>✓</span></div>
+          <div class="success-kicker">YOU'RE ALL SET</div>
+          <h2>Appointment booked.</h2>
+          <p class="success-intro">Thanks, {{ booked.customerName.split(' ')[0] }}. Your appointment has been saved and your confirmation is ready.</p>
+          <div class="reference-card"><div><span>BOOKING REFERENCE</span><strong>{{ booked.reference }}</strong></div><button type="button" class="copy-button" (click)="copyReference(booked.reference)">{{ referenceCopied ? 'Copied ✓' : 'Copy reference' }}</button></div>
+          <div class="confirmation-details">
+            <div class="detail-row"><span class="detail-icon">⌖</span><div><small>Branch</small><strong>{{ booked.branchName }}</strong><span>{{ booked.branchAddress }}</span></div></div>
+            <div class="detail-row"><span class="detail-icon">▦</span><div><small>Date &amp; time</small><strong>{{ formatDate(booked.startsAt.slice(0, 10)) }}</strong><span>{{ formatTime(booked.startsAt.slice(11, 16)) }}</span></div></div>
+            <div class="detail-row"><span class="detail-icon">✉</span><div><small>Confirmation details</small><strong>{{ booked.email }}</strong><span>Simulated confirmation — no message has been sent.</span></div></div>
+          </div>
+          <div class="confirmation-note"><span>✓</span><p>Please arrive a few minutes before your appointment and keep your reference handy.</p></div>
+          <button type="button" class="primary-button full-button" (click)="bookAnother()">Book another appointment <span>→</span></button>
+        </section>
+
+        <form *ngIf="!confirmation" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <section class="form-section">
+            <div class="form-section-title"><span class="number-badge">1</span><div><h3>Choose your branch</h3><p>Where would you like to visit us?</p></div></div>
+            <label class="field-label" for="branch">Branch location <span class="required-mark">*</span></label>
+            <div class="select-wrap"><span class="field-leading-icon">⌖</span><select id="branch" formControlName="branchId" (change)="onBranchChange()" [class.invalid-field]="fieldInvalid('branchId')"><option [ngValue]="null" disabled>{{ loadingBranches ? 'Loading branches…' : 'Select a branch' }}</option><option *ngFor="let branch of branches" [ngValue]="branch.id">{{ branch.name }} — {{ branch.city }}</option></select><span class="select-chevron">⌄</span></div>
+            <p *ngIf="fieldInvalid('branchId')" class="field-error">Please choose a branch.</p>
+            <div *ngIf="selectedBranch as branch" class="branch-preview"><span class="branch-pin">⌖</span><div><strong>{{ branch.name }}</strong><span>{{ branch.address }}, {{ branch.city }}</span></div><span class="open-pill"><i></i> Available</span></div>
+          </section>
+
+          <section class="form-section">
+            <div class="form-section-title"><span class="number-badge">2</span><div><h3>Pick a date &amp; time</h3><p>Appointments are available Monday to Friday.</p></div></div>
+            <div class="field-grid date-grid">
+              <div><label class="field-label" for="date">Appointment date <span class="required-mark">*</span></label><div class="input-wrap"><span class="field-leading-icon">▦</span><input id="date" type="date" formControlName="date" [min]="minDate" [max]="maxDate" (change)="onDateChange()" [class.invalid-field]="fieldInvalid('date')"></div><p *ngIf="fieldInvalid('date')" class="field-error">Choose a valid date.</p></div>
+              <div class="date-hint"><span class="hint-icon">i</span><p>Choose a date up to 60 days ahead. Our branches are closed on weekends.</p></div>
+            </div>
+            <div class="slots-heading"><label class="field-label">Available times <span class="required-mark">*</span></label><span *ngIf="slots.length" class="slots-count">{{ slots.length }} times available</span></div>
+            <div *ngIf="!form.controls.branchId.value" class="empty-slots"><span class="empty-slots-icon">◷</span><span>Select a branch to see available times.</span></div>
+            <div *ngIf="form.controls.branchId.value && loadingSlots" class="empty-slots"><span class="spinner"></span><span>Checking available times…</span></div>
+            <div *ngIf="form.controls.branchId.value && !loadingSlots && slots.length === 0" class="empty-slots"><span class="empty-slots-icon">◷</span><span>No times available for this date. Try another weekday.</span></div>
+            <div *ngIf="!loadingSlots && slots.length" class="time-grid" role="group" aria-label="Available appointment times">
+              <button *ngFor="let slot of slots" type="button" class="time-slot" [class.selected]="form.controls.time.value === slot.time" [attr.aria-pressed]="form.controls.time.value === slot.time" (click)="selectSlot(slot)">{{ formatTime(slot.time) }}</button>
+            </div>
+            <p *ngIf="fieldInvalid('time')" class="field-error">Please choose an available time.</p>
+          </section>
+
+          <section class="form-section contact-section">
+            <div class="form-section-title"><span class="number-badge">3</span><div><h3>Your details</h3><p>So we can prepare for your visit.</p></div></div>
+            <div class="field-grid">
+              <div class="field-full"><label class="field-label" for="fullName">Full name <span class="required-mark">*</span></label><input id="fullName" type="text" autocomplete="name" formControlName="fullName" placeholder="e.g. Thando Mokoena" [class.invalid-field]="fieldInvalid('fullName')"><p *ngIf="fieldInvalid('fullName')" class="field-error">Enter your name (at least 2 characters).</p></div>
+              <div><label class="field-label" for="email">Email address <span class="required-mark">*</span></label><input id="email" type="email" autocomplete="email" formControlName="email" placeholder="you@example.com" [class.invalid-field]="fieldInvalid('email')"><p *ngIf="fieldInvalid('email')" class="field-error">Enter a valid email address.</p></div>
+              <div><label class="field-label" for="phone">Contact number <span class="required-mark">*</span></label><input id="phone" type="tel" autocomplete="tel" formControlName="phoneNumber" placeholder="e.g. 082 123 4567" [class.invalid-field]="fieldInvalid('phoneNumber')"><p *ngIf="fieldInvalid('phoneNumber')" class="field-error">Enter a valid contact number.</p></div>
+            </div>
+          </section>
+
+          <div *ngIf="bookingError" class="alert error-alert" role="alert"><span class="alert-symbol">!</span><span>{{ bookingError }}</span></div>
+          <div class="submit-row"><div class="privacy-note"><span class="lock-icon">▣</span><span>Your details are used to manage this appointment.</span></div><button class="primary-button" type="submit" [disabled]="submitting || loadingBranches">{{ submitting ? 'Booking your visit…' : 'Confirm appointment' }} <span *ngIf="!submitting">→</span><span *ngIf="submitting" class="button-spinner"></span></button></div>
+        </form>
+      </div>
+
+      <aside class="booking-aside">
+        <div class="aside-card summary-card">
+          <div class="aside-card-heading"><span class="aside-heading-icon">▦</span><h3>Your visit at a glance</h3></div>
+          <p class="aside-subtitle">A little planning goes a long way.</p>
+          <div class="summary-line"><span class="summary-icon">⌖</span><div><small>BRANCH</small><strong>{{ selectedBranch?.name || 'Choose a branch' }}</strong><span>{{ selectedBranch ? selectedBranch.city : 'Your preferred location' }}</span></div></div>
+          <div class="summary-line"><span class="summary-icon">▦</span><div><small>DATE</small><strong>{{ form.controls.date.value ? formatDate(form.controls.date.value) : 'Choose a date' }}</strong></div></div>
+          <div class="summary-line"><span class="summary-icon">◷</span><div><small>TIME</small><strong>{{ selectedSlot ? formatTime(selectedSlot.time) : 'Choose a time' }}</strong></div></div>
+          <div class="summary-divider"></div>
+          <div class="summary-status"><span class="status-check">✓</span><span>Free to book. No payment required.</span></div>
+        </div>
+        <div class="aside-card tip-card"><div class="tip-icon">✦</div><div><h3>Make the most of your visit</h3><p>Bring your ID and any documents related to the service you need. Arriving a few minutes early helps us get you sorted sooner.</p></div></div>
+        <div class="support-card"><div class="support-avatar">?</div><div><strong>Need a hand?</strong><p>We're here to help with your booking.</p><span class="support-demo-note">Support contact can be configured here.</span></div></div>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="footer"><span>© {{ currentYear }} Capitec Appointments</span><span><span class="footer-dot"></span>Find ways to bank better</span></footer>
+</div>
+
+
+
+

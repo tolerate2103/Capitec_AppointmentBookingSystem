@@ -1,0 +1,36 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-LocalOnly_ChangeMe_123!}
+    ports:
+      - "1433:1433"
+    volumes:
+      - appointment-sql-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"SELECT 1\" >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 25s
+
+  appointment-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      TZ: Africa/Johannesburg
+      ConnectionStrings__AppointmentDb: "Server=sqlserver,1433;Database=AppointmentBooking;User Id=sa;Password=${MSSQL_SA_PASSWORD:-LocalOnly_ChangeMe_123!};Encrypt=False;TrustServerCertificate=True;"
+      Booking__SlotCapacity: "4"
+      Booking__AdvanceBookingDays: "60"
+    ports:
+      - "8080:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+volumes:
+  appointment-sql-data:
